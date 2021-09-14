@@ -2,24 +2,28 @@ from glob import glob
 import os
 from random import choice
 
-from utils import get_smile, is_cat2, play_random_numbers, main_keyboard
+from db import db, get_or_create_user
+from utils import is_cat2, play_random_numbers, main_keyboard
+
 
 def greet_user(update, context):
+    user = get_or_create_user(db, update.effective_user, update.message.chat.id)
     print("Вызван /start")
-    context.user_data['emoji'] = get_smile(context.user_data)
     update.message.reply_text(
                     f"Здравствуй, пользователь {context.user_data['emoji']}!",
                     reply_markup=main_keyboard()
                     )
 
+
 def talk_to_me(update, context):
-    context.user_data['emoji'] = get_smile(context.user_data)
+    user = get_or_create_user(db, update.effective_user, update.message.chat.id)
     text = update.message.text
     print(text)
-    update.message.reply_text(f"{text} {context.user_data['emoji']}", reply_markup=main_keyboard())
+    update.message.reply_text(f"{text} {user['emoji']}", reply_markup=main_keyboard())
+
 
 def guess_number(update, context):
-    print(context.args)
+    user = get_or_create_user(db, update.effective_user, update.message.chat.id)
     if context.args:
         try:
             user_number = int(context.args[0])
@@ -30,21 +34,25 @@ def guess_number(update, context):
         message = "Введите число"
     update.message.reply_text(message, reply_markup=main_keyboard())
 
+
 def send_cat_picture(update, context):
     cat_photos_list = glob('images/cat*.jp*g')
     cat_pic_filename = choice(cat_photos_list)
     chat_id = update.effective_chat.id
     context.bot.send_photo(chat_id=chat_id, photo=open(cat_pic_filename, 'rb'), reply_markup=main_keyboard())
 
+
 def user_coordinates(update, context):
-    context.user_data['emoji'] = get.smile(context.user_data)
+    user = get_or_create_user(db, update.effective_user, update.message.chat.id)
     coords = update.message.location
     update.message.reply_text(
-            f"Ваши координаты {coords} {context.user_data['emoji']}!",
+            f"Ваши координаты {coords} {user['emoji']}!",
             reply_markup=main_keyboard()
     )
 
+
 def check_user_photo(update, context):
+    user = get_or_create_user(db, update.effective_user, update.message.chat.id)
     update.message.reply_text("Обрабатываем фотографию")
     os.makedirs("downloads", exist_ok=True)
     user_photo = context.bot.getFile(update.message.photo[-1].file_id)
